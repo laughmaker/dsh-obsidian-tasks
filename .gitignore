@@ -1,0 +1,7 @@
+node_modules/
+lib/
+*.tsbuildinfo
+backups/
+# Local browser-automation logs and page snapshots (dev-only artifacts)
+.playwright-cli/
+*.log

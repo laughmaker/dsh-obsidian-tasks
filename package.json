@@ -1,0 +1,65 @@
+{
+  "name": "dsh-obsidian-tasks",
+  "version": "0.15.8",
+  "description": "Obsidian tasks for DeepSeek Harness: six model-facing tools (list/add/complete/move/append/config) plus a graphical task-board page in the DSH GUI. 中文：把 Obsidian 库接入 DSH 做日常任务管理，并提供图形化任务看板页面。",
+  "type": "module",
+  "main": "lib/index.js",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-sidebar"
+      ]
+    }
+  },
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "engines": {
+    "dsh": ">=0.2.1-rc.1 <0.3.0"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "dsh-bundle",
+    "plugin",
+    "obsidian",
+    "tasks",
+    "todo",
+    "board",
+    "kanban"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "build": "tsdown --config tsdown.config.mjs",
+    "test": "vitest run tests",
+    "test:client": "vitest run tests/client-contract.test.ts && node script/e2e-client.mjs",
+    "typecheck": "node script/typecheck.mjs",
+    "test:e2e": "node script/e2e-board.mjs"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "^4.0.5",
+    "@deepseek-ai/dsh-tools": "0.2.1-rc.5",
+    "tsdown": "^0.22.2",
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.11"
+  }
+}

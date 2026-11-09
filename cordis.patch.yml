@@ -1,0 +1,12 @@
+# dsh-obsidian-tasks bundle patch
+#
+# The single row this bundle contributes. A profile that lists
+# `dsh-obsidian-tasks` under `dsh.profile.bundles` mounts that row, whose Node
+# half registers the Obsidian task-management tools into the tools registry and
+# the `/dsh-obsidian-tasks/*` board routes on the Host web server. The same row's
+# `dsh.client` metadata (package.json) makes the host serve the browser half from
+# the package's `./client` export, which adds the sidebar "Tasks" entry and the
+# graphical board page.
+- insert:
+    - id: obsidian-tasks
+      name: 'dsh-obsidian-tasks'
