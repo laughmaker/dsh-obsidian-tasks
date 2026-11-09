@@ -26,6 +26,9 @@ export const css = String.raw`
      blue as the Today smart-view icon (navItems[0].color in BoardPage.tsx),
      not the host's theme token, which can be a pale blue in dark mode. */
   --ob-today-accent: #0a84ff;
+  /* Every quiet 1px divider in the board (header rule, vault row, sidebar
+     seam, timeline guides, tag index) uses this one soft border colour. */
+  --ob-border: color-mix(in srgb, var(--dsw-alias-border-l2, #e6e6e6) 65%, transparent);
   --ob-on-accent: var(--dsw-alias-label-on-color, #fff);
   --ob-content-max: 820px;
   --ob-mark: 20px;
@@ -74,14 +77,14 @@ export const css = String.raw`
      base colour, so no gradient, glow or dot texture sets it apart. The
      left border is the only thing that separates it from the main pane. */
   background: var(--dsw-alias-bg-base, #fff);
-  border-left: 1px solid var(--dsw-alias-border-l2, #e6e6e6);
+  border-left: 1px solid var(--ob-border);
   box-sizing: border-box;
   box-shadow: none;
 }
 .ob-rem-vaultrow {
   display: flex; align-items: center; gap: 8px;
   margin: 0 1px 8px; padding: 2px 2px 10px;
-  border-bottom: 1px solid color-mix(in srgb, var(--dsw-alias-border-l2, #e6e6e6) 65%, transparent);
+  border-bottom: 1px solid var(--ob-border);
   min-height: 34px;
 }
 .ob-rem-vaultname {
@@ -199,7 +202,7 @@ export const css = String.raw`
    The horizontal branch runs from the guide to the dot column (28px). */
 .ob-rem-tlchildren {
   margin-left: 15.5px; padding-left: 14.5px;
-  border-left: 1px solid var(--dsw-alias-border-l2, #e6e6e6);
+  border-left: 1px solid var(--ob-border);
 }
 .ob-rem-tlrow {
   position: relative;
@@ -209,7 +212,7 @@ export const css = String.raw`
 .ob-rem-tlchildren > .ob-rem-tlgroup > .ob-rem-tlrow::before,
 .ob-rem-tlchildren > .ob-rem-tlrow::before {
   content: ''; position: absolute; left: -15.5px; top: 50%; width: 28px;
-  border-top: 1px solid var(--dsw-alias-border-l2, #e6e6e6); pointer-events: none;
+  border-top: 1px solid var(--ob-border); pointer-events: none;
 }
 .ob-rem-tlrow-year { padding-top: 7px; padding-bottom: 7px; }
 .ob-rem-tlrow-month { padding-top: 4px; padding-bottom: 4px; }
@@ -265,7 +268,7 @@ export const css = String.raw`
 .ob-rem-tags {
   position: relative; z-index: 2;
   margin-top: 12px; padding-top: 10px;
-  border-top: 1px solid var(--dsw-alias-border-l2, #e6e6e6);
+  border-top: 1px solid var(--ob-border);
   /* Inherit the browser column's surface instead of painting a solid block. */
   background: transparent;
 }
@@ -311,7 +314,7 @@ export const css = String.raw`
 .ob-rem-subbar {
   display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
   margin: 9px 0 18px; padding-bottom: 14px;
-  border-bottom: 1px solid var(--dsw-alias-border-l2, #eee);
+  border-bottom: 1px solid var(--ob-border);
   font-size: 12px; color: var(--dsw-alias-label-secondary, #666);
 }
 .ob-rem-completed { color: var(--dsw-alias-label-tertiary, #999); }

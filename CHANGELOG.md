@@ -546,3 +546,18 @@
 **验证**：`pnpm typecheck` 两端通过；`pnpm build` 双产物；`pnpm test` 104 项；`pnpm test:e2e` ALL PASS；`pnpm test:client` 34 项浏览器断言全 PASS（新增「任务行无底部分隔线」computed `borderBottomWidth === '0px'`）。截图任务区像素扫描确认已无任何水平分隔线；上一版的编辑态零位移 / 下划线同色断言仍全部通过（行分隔线移除后行高变化仍在 1.5px 内）。
 
 **注意**：仅客户端改动，⌘R 重载窗口生效。若只想去掉列表最后一条线、保留行间分隔，改为 `.ob-rem-trow:last-child { border-bottom: 0 }` 即可。
+
+### 2026-11-09 v0.15.9：四处分隔线统一为同一淡色
+
+**反馈**：用户标注 ① 标题区横线、② 侧栏 vault 行横线、③ 侧栏左边缘竖线、④ 时间线树连接线，要求「这 4 个 border 线，保持同一个颜色，与编号 2 一致」。截图像素采样：①③④ 为 `[48,47,50]`（都是 `--dsw-alias-border-l2` 实色），只有 ② 是 `[40,39,42]`（`color-mix(... 65%, transparent)` 半透明）。确认方向后按字面统一到 ② 的淡色。
+
+**变更**（`src/client/styles.ts`）：
+- 新增共享变量 `--ob-border: color-mix(in srgb, var(--dsw-alias-border-l2, #e6e6e6) 65%, transparent)`。
+- 以下安静型 1px 分隔线全部改用 `var(--ob-border)`：`.ob-rem-subbar` 底边、`.ob-rem-vaultrow` 底边、`.ob-rem-side` 左边、`.ob-rem-tlchildren` 左边与 `.ob-rem-tlrow::before` 顶边（时间线树的竖脊与横枝）、`.ob-rem-tags` 顶边。
+- 交互元素（vault 下拉 hover、日期胶囊、日历/目标菜单浮层）仍用原始 token，不受影响。
+
+**影响文件**：`src/client/styles.ts`、`tests/client-contract.test.ts`、`script/e2e-client.mjs`、`package.json`；新增预览 `docs/screenshots/20261109_分隔线统一_v1_dark.png`。
+
+**验证**：`pnpm typecheck` 两端通过；`pnpm build` 双产物；`pnpm test` 105 项；`pnpm test:e2e` ALL PASS；`pnpm test:client` 35 项浏览器断言全 PASS。新增断言读取 6 处 computed 边框色（含 `::before` 伪元素）并确认完全一致；实测把其中一条改回实色时该断言 FAIL、恢复后 PASS。暗色截图像素核对标题线 / vault 线 / 侧栏接缝均为 `[47,47,49]`。
+
+**注意**：仅客户端改动，⌘R 重载窗口生效。

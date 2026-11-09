@@ -436,6 +436,26 @@ async function main() {
       iconColors.poisonedAccent === '#ff00ff'
         && iconColors.add === iconColors.nav && iconColors.done === iconColors.nav, iconColors)
 
+    // 0a2) All quiet 1px dividers share one colour (the soft vault-row rule).
+    const dividerColors = await page.evaluate(() => {
+      const style = (sel, pseudo) => {
+        const el = document.querySelector(sel)
+        return el ? getComputedStyle(el, pseudo) : null
+      }
+      const pick = (s, prop) => s ? s.getPropertyValue(prop) : null
+      return {
+        header: pick(style('.ob-rem-subbar'), 'border-bottom-color'),
+        vault: pick(style('.ob-rem-vaultrow'), 'border-bottom-color'),
+        side: pick(style('.ob-rem-side'), 'border-left-color'),
+        tree: pick(style('.ob-rem-tlchildren'), 'border-left-color'),
+        branch: pick(style('.ob-rem-tlchildren .ob-rem-tlrow', '::before'), 'border-top-color'),
+        tags: pick(style('.ob-rem-tags'), 'border-top-color'),
+      }
+    })
+    const dividerValues = Object.values(dividerColors)
+    check('四处分隔线统一为同一淡色',
+      dividerValues.every(Boolean) && new Set(dividerValues).size === 1, dividerColors)
+
     // 0b) The timeline tree shows TOTAL tasks, not just the open subset.
     //     The mock year has count=2 / total=3; a fully done month must still
     //     read as activity. The hover copy keeps the open number as well.

@@ -265,6 +265,15 @@ describe('v0.15 · 吸顶留白、可拖侧栏与旧服务端降级', () => {
     expect(board).toContain("color: '#0a84ff'")
   })
 
+  it('四处分隔线统一使用同一淡色变量', () => {
+    expect(styles).toContain('--ob-border: color-mix(in srgb, var(--dsw-alias-border-l2, #e6e6e6) 65%, transparent);')
+    expect(styles).toContain('border-left: 1px solid var(--ob-border);')
+    expect(styles).toContain('border-bottom: 1px solid var(--ob-border);')
+    expect(styles).toContain('border-top: 1px solid var(--ob-border);')
+    // Only interactive popovers/chips may still use the raw token.
+    expect(styles).not.toContain('border-bottom: 1px solid var(--dsw-alias-border-l2, #eee);')
+  })
+
   it('任务行不画底部分隔线', () => {
     const trow = styles.match(/\.ob-rem-trow \{([\s\S]*?)\}/)?.[1] ?? ''
     expect(trow).toContain('padding: 10px 42px 10px 6px;')
@@ -282,7 +291,7 @@ describe('v0.15 · 吸顶留白、可拖侧栏与旧服务端降级', () => {
 
   it('侧栏与容器同底色、有左边框、图标统一 15px', () => {
     expect(styles).toContain('background: var(--dsw-alias-bg-base, #fff);')
-    expect(styles).toContain('border-left: 1px solid var(--dsw-alias-border-l2, #e6e6e6);')
+    expect(styles).toContain('border-left: 1px solid var(--ob-border);')
     expect(styles).toContain('box-sizing: border-box;')
     expect(styles).not.toContain('.ob-rem-side::before')
     expect(styles).not.toContain('.ob-rem-side::after')
