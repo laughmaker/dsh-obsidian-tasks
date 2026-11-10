@@ -561,3 +561,20 @@
 **验证**：`pnpm typecheck` 两端通过；`pnpm build` 双产物；`pnpm test` 105 项；`pnpm test:e2e` ALL PASS；`pnpm test:client` 35 项浏览器断言全 PASS。新增断言读取 6 处 computed 边框色（含 `::before` 伪元素）并确认完全一致；实测把其中一条改回实色时该断言 FAIL、恢复后 PASS。暗色截图像素核对标题线 / vault 线 / 侧栏接缝均为 `[47,47,49]`。
 
 **注意**：仅客户端改动，⌘R 重载窗口生效。
+
+### 2026-11-10 v0.15.10：添加按钮与输入下划线统一为 + 图标蓝
+
+**反馈**（两处标注）：① 添加条右侧的 Add 按钮底色要与左侧 + 图标一致；② 输入框聚焦时的下边框要与 + 图标同色。
+
+**根因**：Add 按钮与输入下划线原来都用 `--ob-accent`（映射宿主 `--dsw-alias-state-business-primary`，深色模式下是淡蓝 `#7aabfe`），而 + 图标、完成勾选用的是固定的 `--ob-today-accent: #0a84ff`，两套蓝色在深色下明显不同。
+
+**变更**（全部在 `src/client/styles.ts`）：
+- `.ob-rem-add-submit` 背景与 hover 改用 `var(--ob-today-accent)`，与 `.ob-rem-addbtn` 同色；禁用态灰底保持不变。
+- `.ob-rem-add-input:focus` / `:focus-visible` 的 `border-bottom-color` 改用 `var(--ob-today-accent)`（两处规则）。
+- 同步更新 `--ob-today-accent` 的注释（填充型动作共三处：+、Add、完成勾选）。
+
+**影响文件**：`src/client/styles.ts`、`tests/client-contract.test.ts`、`script/e2e-client.mjs`、`package.json`；新增预览 `docs/screenshots/20261110_添加条配色_v1_dark.png`。
+
+**验证**：`pnpm typecheck` 两端通过；`pnpm build` 双产物；`pnpm test` 106 项；`pnpm test:e2e` ALL PASS；`pnpm test:client` 36 项浏览器断言全 PASS。新增 e2e 断言复用「宿主 token 注入洋红」手法，验证 Add 按钮与聚焦下划线仍为 `rgb(10, 132, 255)`（与 + 相同）且 `--ob-accent` 确实被污染；首次测量发现下划线过渡未完成（alpha 0.98），改为真实点击并等待过渡结束后通过。新增截图 `docs/screenshots/20261110_添加条配色_v1_dark.png` 显示 Add 与下划线均为 `#0a84ff`。
+
+**注意**：仅客户端改动，⌘R 重载窗口生效。

@@ -366,6 +366,14 @@ async function main() {
         await page.locator('.ob-rem-tedit').first().click()
         await page.waitForTimeout(150)
       }
+      // OB_BOARD_FOCUS_ADD=1 focuses the composer and types one character so a
+      // shot shows both the enabled Add button fill and the focused underline.
+      if (process.env.OB_BOARD_FOCUS_ADD === '1') {
+        const input = page.locator('.ob-rem-add-input')
+        await input.click()
+        await input.fill('d')
+        await page.waitForTimeout(150)
+      }
       await page.waitForTimeout(200)
       await page.screenshot({ path: shot })
       console.log(`[SHOT] ${shot}`)
@@ -410,6 +418,11 @@ async function main() {
     // 0a) The + button and the done checkbox must use the Today smart-view
     //     blue, not the host theme token (which is a pale blue in dark mode).
     //     Poison the host token with magenta and prove neither icon follows it.
+    //     A real click is required: programmatic .focus() does not paint :focus
+    //     in this offscreen browser, so the composer underline would stay clear.
+    const composer = page.locator('.ob-rem-add-input')
+    await composer.click()
+    await page.waitForTimeout(400)
     const iconColors = await page.evaluate(() => {
       const root = document.documentElement
       const prev = root.style.getPropertyValue('--dsw-alias-state-business-primary')
@@ -420,21 +433,42 @@ async function main() {
       pageEl.appendChild(probe)
       const add = document.querySelector('.ob-rem-addbtn')
       const navIcon = document.querySelector('.ob-rem-navrow-active .ob-rem-navicon')
+      // The Add submit button is disabled (grey) while the input is empty, so
+      // probe an enabled stand-in to read its base fill; the input underline
+      // only paints while focused, so focus the real input briefly.
+      const submitProbe = document.createElement('div')
+      submitProbe.className = 'ob-rem-add-submit'
+      pageEl.appendChild(submitProbe)
+      const input = document.querySelector('.ob-rem-add-input')
+      const underline = input ? getComputedStyle(input).borderBottomColor : null
+      const focused = document.activeElement === input
+      const disabled = input ? input.disabled : null
+      if (input) input.blur()
       const out = {
         add: add ? getComputedStyle(add).backgroundColor : null,
         done: getComputedStyle(probe).backgroundColor,
         nav: navIcon ? getComputedStyle(navIcon).color : null,
+        submit: getComputedStyle(submitProbe).backgroundColor,
+        underline,
+        focused,
+        disabled,
         // Proves the poison actually took effect on --ob-accent.
         poisonedAccent: getComputedStyle(pageEl).getPropertyValue('--ob-accent').trim(),
       }
       probe.remove()
+      submitProbe.remove()
       if (prev) root.style.setProperty('--dsw-alias-state-business-primary', prev)
       else root.style.removeProperty('--dsw-alias-state-business-primary')
       return out
     })
+    await composer.fill('')
+    await page.evaluate(() => document.activeElement?.blur())
     check('+ 与完成勾选跟随 Today 蓝而非宿主主题色',
       iconColors.poisonedAccent === '#ff00ff'
         && iconColors.add === iconColors.nav && iconColors.done === iconColors.nav, iconColors)
+    check('添加按钮与输入下划线跟随 Today 蓝（与 + 同色）而非宿主主题色',
+      iconColors.poisonedAccent === '#ff00ff'
+        && iconColors.submit === iconColors.add && iconColors.underline === iconColors.add, iconColors)
 
     // 0a2) All quiet 1px dividers share one colour (the soft vault-row rule).
     const dividerColors = await page.evaluate(() => {

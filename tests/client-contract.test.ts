@@ -265,6 +265,14 @@ describe('v0.15 · 吸顶留白、可拖侧栏与旧服务端降级', () => {
     expect(board).toContain("color: '#0a84ff'")
   })
 
+  it('添加按钮与输入下划线用 Today 蓝而非宿主主题色', () => {
+    expect(styles).toContain('color: var(--ob-on-accent); background: var(--ob-today-accent); font: inherit; font-size: 11.5px; font-weight: 650;')
+    expect(styles).toContain('.ob-rem-add-submit:hover:not(:disabled) { background: color-mix(in srgb, var(--ob-today-accent) 86%, #000); }')
+    expect(styles).toContain('outline: none; border-bottom-color: var(--ob-today-accent);')
+    expect(styles).toContain('.ob-rem-add-input:focus-visible { outline: none; border-bottom-color: var(--ob-today-accent); }')
+    expect(styles).not.toContain('border-bottom-color: var(--ob-accent)')
+  })
+
   it('四处分隔线统一使用同一淡色变量', () => {
     expect(styles).toContain('--ob-border: color-mix(in srgb, var(--dsw-alias-border-l2, #e6e6e6) 65%, transparent);')
     expect(styles).toContain('border-left: 1px solid var(--ob-border);')

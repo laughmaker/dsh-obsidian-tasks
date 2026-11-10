@@ -22,9 +22,10 @@ export const SHEET_NAME = 'board.css'
 export const css = String.raw`
 .ob-rem-page {
   --ob-accent: var(--dsw-alias-state-business-primary, #0a84ff);
-  /* The two filled action icons (+ and the done check) use the same vivid
-     blue as the Today smart-view icon (navItems[0].color in BoardPage.tsx),
-     not the host's theme token, which can be a pale blue in dark mode. */
+  /* The filled actions (+ icon, Add button and the done check) use the same
+     vivid blue as the Today smart-view icon (navItems[0].color in
+     BoardPage.tsx), not the host's theme token, which can be a pale blue in
+     dark mode. */
   --ob-today-accent: #0a84ff;
   /* Every quiet 1px divider in the board (header rule, vault row, sidebar
      seam, timeline guides, tag index) uses this one soft border colour. */
@@ -367,10 +368,10 @@ export const css = String.raw`
 .ob-rem-addbtn:disabled { opacity: 0.45; cursor: default; }
 .ob-rem-add-submit {
   flex: none; min-height: 30px; padding: 4px 12px; border: 0; border-radius: 7px;
-  color: var(--ob-on-accent); background: var(--ob-accent); font: inherit; font-size: 11.5px; font-weight: 650;
+  color: var(--ob-on-accent); background: var(--ob-today-accent); font: inherit; font-size: 11.5px; font-weight: 650;
   white-space: nowrap; cursor: pointer;
 }
-.ob-rem-add-submit:hover:not(:disabled) { background: color-mix(in srgb, var(--ob-accent) 86%, #000); }
+.ob-rem-add-submit:hover:not(:disabled) { background: color-mix(in srgb, var(--ob-today-accent) 86%, #000); }
 .ob-rem-add-submit:disabled {
   color: var(--dsw-alias-label-secondary, #666); background: var(--dsw-alias-bg-layer-2, #f2f2f5);
   cursor: default;
@@ -383,7 +384,7 @@ export const css = String.raw`
   transition: border-bottom-color 0.12s ease;
 }
 .ob-rem-add-input:focus, .ob-rem-add-input:focus-visible {
-  outline: none; border-bottom-color: var(--ob-accent);
+  outline: none; border-bottom-color: var(--ob-today-accent);
 }
 .ob-rem-add-input::placeholder { color: var(--dsw-alias-label-tertiary, #aaa); }
 .ob-rem-add-input:disabled { opacity: 0.6; }
@@ -659,7 +660,7 @@ button.ob-rem-statusbar { cursor: pointer; }
 .ob-rem-statusbar-action:focus-visible {
   outline: 2px solid var(--ob-accent); outline-offset: 1px;
 }
-.ob-rem-add-input:focus-visible { outline: none; border-bottom-color: var(--ob-accent); }
+.ob-rem-add-input:focus-visible { outline: none; border-bottom-color: var(--ob-today-accent); }
 
 /* ── Respond to the embedded board, not the host window ───────── */
 @container (max-width: 1100px) {
