@@ -565,6 +565,16 @@ async function main() {
     })
     check('库切换器存在且填充选项', vaultState.exists && vaultState.options === 2, vaultState)
 
+    // 1b) The compact date buttons stay comfortably tappable.
+    const dateButtonBox = await page.evaluate(() => {
+      const height = (selector) => {
+        const el = document.querySelector(selector)
+        return el ? Math.round(el.getBoundingClientRect().height * 10) / 10 : 0
+      }
+      return { pill: height('.ob-rem-datepill'), chip: height('.ob-rem-datechip') }
+    })
+    check('日期按钮与写入目标胶囊高度均 ≥ 26px', dateButtonBox.pill >= 26 && dateButtonBox.chip >= 26, dateButtonBox)
+
     // 2) Today with overdue work never claims "all done".
     const statusState = await page.evaluate(() => ({
       alert: document.querySelectorAll('.ob-rem-statusbar-alert').length,

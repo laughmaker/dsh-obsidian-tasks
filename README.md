@@ -82,7 +82,7 @@ DSH GUI 左栏多出一个「任务」图标，点开在**主内容区**显示�
 2. 或直接在 profile 里装 npm 包：
 
 ```bash
-dsh plugin --profile desktop add dsh-obsidian-tasks@0.15.10
+dsh plugin --profile desktop add dsh-obsidian-tasks@0.15.11
 ```
 
 > 运行 `dsh plugin add` 前确认该 profile 的 DSH 版本满足 `engines.dsh`（`>=0.2.1-rc.1 <0.3.0`）。

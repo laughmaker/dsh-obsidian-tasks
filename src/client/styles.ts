@@ -335,7 +335,7 @@ export const css = String.raw`
 .ob-rem-datepill {
   display: inline-flex; align-items: center; gap: 6px;
   border: 1px solid var(--dsw-alias-border-l2, #ddd); border-radius: 999px; /* pill */
-  padding: 3px 8px; font: inherit; font-size: 11.5px; white-space: nowrap;
+  min-height: 28px; padding: 4px 12px; font: inherit; font-size: 11.5px; white-space: nowrap;
   color: var(--dsw-alias-label-secondary, #666);
   background: var(--dsw-alias-bg-layer-1, #fff); cursor: pointer;
 }
@@ -411,7 +411,7 @@ export const css = String.raw`
 .ob-rem-addtarget-label { font-size: 10.5px; color: var(--dsw-alias-label-tertiary, #aaa); }
 .ob-rem-datechip {
   display: inline-flex; align-items: center; gap: 4px;
-  border: 0; border-radius: 999px; padding: 3px 6px; /* pill */
+  border: 0; border-radius: 999px; min-height: 28px; padding: 4px 10px; /* pill */
   font: inherit; font-size: 11.5px; white-space: nowrap;
   color: var(--dsw-alias-label-secondary, #666);
   background: var(--dsw-alias-bg-layer-2, #f2f2f5); cursor: pointer;

@@ -578,3 +578,22 @@
 **验证**：`pnpm typecheck` 两端通过；`pnpm build` 双产物；`pnpm test` 106 项；`pnpm test:e2e` ALL PASS；`pnpm test:client` 36 项浏览器断言全 PASS。新增 e2e 断言复用「宿主 token 注入洋红」手法，验证 Add 按钮与聚焦下划线仍为 `rgb(10, 132, 255)`（与 + 相同）且 `--ob-accent` 确实被污染；首次测量发现下划线过渡未完成（alpha 0.98），改为真实点击并等待过渡结束后通过。新增截图 `docs/screenshots/20261110_添加条配色_v1_dark.png` 显示 Add 与下划线均为 `#0a84ff`。
 
 **注意**：仅客户端改动，⌘R 重载窗口生效。
+
+### 2026-11-10 v0.15.11：日期按钮与写入目标胶囊加高到 28px
+
+**反馈**（两处标注）：① 顶部「Pick a date」日期按钮太矮；② 添加条「Add to Today」的写入目标胶囊太矮；两处都要求加高。
+
+**变更**（`src/client/styles.ts`）：
+- `.ob-rem-datepill` 增加 `min-height: 28px`，内边距由 `3px 8px` 改为 `4px 12px`。
+- `.ob-rem-datechip` 增加 `min-height: 28px`，内边距由 `3px 6px` 改为 `4px 10px`。
+- 两者仍为 `border-radius: 999px` 的真胶囊（`corner-shape: superellipse(1)`），高度接近添加条 Add 按钮（30px），不再显得矮小。
+
+**同版一并发布**（v0.15.10 之后已合入，此前未发版）：
+- `f62faf8` 把日期选择器、添加条目标 chip、Add 按钮、导航行与时间线行统一为 `999px` 胶囊。
+- `08d593a` 针对宿主主题注入的 `corner-shape: superellipse(1.5)`，为胶囊/圆形元素显式声明 `corner-shape: round`，避免圆角被拉成方圆形。
+
+**影响文件**：`src/client/styles.ts`、`script/e2e-client.mjs`、`package.json`、`README.md`；新增预览 `docs/screenshots/20261110_按钮高度_v1_dark.png`。
+
+**验证**：`pnpm typecheck` 两端通过；`pnpm build` 双产物；`pnpm test` 106 项；`pnpm test:e2e` ALL PASS；`pnpm test:client` 37 项浏览器断言全 PASS（新增「日期按钮与写入目标胶囊高度均 ≥ 26px」）。暗色 dsh-web 实测：两处 computed 高度 21/19 → 28/28px，宽度 97.1/58.6 → 105.1/66.6px，`min-height: 28px`、`border-radius: 999px`、`corner-shape: superellipse(1)`；顶部工具栏与添加卡随内容自然增高，无重叠、裁切或换行。
+
+**注意**：仅客户端改动，⌘R 重载窗口生效。

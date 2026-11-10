@@ -1,6 +1,6 @@
 {
   "name": "dsh-obsidian-tasks",
-  "version": "0.15.10",
+  "version": "0.15.11",
   "description": "Obsidian tasks for DeepSeek Harness: six model-facing tools (list/add/complete/move/append/config) plus a graphical task-board page in the DSH GUI. 中文：把 Obsidian 库接入 DSH 做日常任务管理，并提供图形化任务看板页面。",
   "type": "module",
   "main": "lib/index.js",
