@@ -134,7 +134,7 @@ export const css = String.raw`
 .ob-rem-nav { display: flex; flex-direction: column; gap: 1px; }
 .ob-rem-navrow {
   display: flex; align-items: center; gap: 9px; width: 100%;
-  padding: 6px 7px; border: 0; border-radius: 8px;
+  padding: 6px 7px; border: 0; border-radius: 999px; /* pill */
   background: transparent; font: inherit; font-size: 13px; color: var(--dsw-alias-label-primary, #1a1a1a);
   text-align: left; cursor: pointer;
 }
@@ -208,7 +208,7 @@ export const css = String.raw`
 .ob-rem-tlrow {
   position: relative;
   display: flex; align-items: center; gap: 2px;
-  min-width: 0; padding: 4px 5px; border-radius: 6px;
+  min-width: 0; padding: 4px 5px; border-radius: 999px; /* pill */
 }
 .ob-rem-tlchildren > .ob-rem-tlgroup > .ob-rem-tlrow::before,
 .ob-rem-tlchildren > .ob-rem-tlrow::before {
@@ -334,7 +334,7 @@ export const css = String.raw`
 .ob-rem-datectl { position: relative; }
 .ob-rem-datepill {
   display: inline-flex; align-items: center; gap: 6px;
-  border: 1px solid var(--dsw-alias-border-l2, #ddd); border-radius: 7px;
+  border: 1px solid var(--dsw-alias-border-l2, #ddd); border-radius: 999px; /* pill */
   padding: 3px 8px; font: inherit; font-size: 11.5px; white-space: nowrap;
   color: var(--dsw-alias-label-secondary, #666);
   background: var(--dsw-alias-bg-layer-1, #fff); cursor: pointer;
@@ -367,7 +367,7 @@ export const css = String.raw`
 .ob-rem-addbtn:hover { background: color-mix(in srgb, var(--ob-today-accent) 86%, #000); }
 .ob-rem-addbtn:disabled { opacity: 0.45; cursor: default; }
 .ob-rem-add-submit {
-  flex: none; min-height: 30px; padding: 4px 12px; border: 0; border-radius: 7px;
+  flex: none; min-height: 30px; padding: 4px 12px; border: 0; border-radius: 999px; /* pill */
   color: var(--ob-on-accent); background: var(--ob-today-accent); font: inherit; font-size: 11.5px; font-weight: 650;
   white-space: nowrap; cursor: pointer;
 }
@@ -411,7 +411,7 @@ export const css = String.raw`
 .ob-rem-addtarget-label { font-size: 10.5px; color: var(--dsw-alias-label-tertiary, #aaa); }
 .ob-rem-datechip {
   display: inline-flex; align-items: center; gap: 4px;
-  border: 0; border-radius: 6px; padding: 3px 6px;
+  border: 0; border-radius: 999px; padding: 3px 6px; /* pill */
   font: inherit; font-size: 11.5px; white-space: nowrap;
   color: var(--dsw-alias-label-secondary, #666);
   background: var(--dsw-alias-bg-layer-2, #f2f2f5); cursor: pointer;
