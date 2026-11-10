@@ -692,6 +692,16 @@ button.ob-rem-statusbar { cursor: pointer; }
 
 /* Theme is carried by the host --dsw-alias-* tokens and color-mix(); no
    prefers-color-scheme overrides, so the board always matches the host. */
+
+/* The host theme applies corner-shape: superellipse(1.5) to every element.
+   Full-round shapes must opt back into circular corners, otherwise pill and
+   circle outlines deform instead of forming true arcs; mirrors the host's
+   own pill/circle treatment. */
+.ob-rem-navrow, .ob-rem-tlrow, .ob-rem-tagfilter, .ob-rem-datepill,
+.ob-rem-add-submit, .ob-rem-datechip, .ob-rem-tag,
+.ob-rem-tldot, .ob-rem-addbtn, .ob-rem-check, .ob-rem-empty-icon {
+  corner-shape: round;
+}
 ` + calendarCss
 
 /**
