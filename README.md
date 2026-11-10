@@ -70,7 +70,24 @@ DSH GUI 左栏多出一个「任务」图标，点开在**主内容区**显示�
 
 新增其它 vault 时，在 `vaults` 里加一项即可，工具与页面的「库」下拉都按 `name` 选择。
 
-## 安装（本地开发）
+## 安装
+
+### 从 npm 安装
+
+插件已发布到 npm（`dsh-obsidian-tasks`），DSH 的 **Plugins → Discover** 里也能装到：
+
+1. 在 **Plugins → Discover** 的 **索引源** 中添加
+   `https://raw.githubusercontent.com/laughmaker/dsh-plugin-market/main/index.json`
+   （社区索引，收录本插件），然后从条目里点安装；
+2. 或直接在 profile 里装 npm 包：
+
+```bash
+dsh plugin --profile desktop add dsh-obsidian-tasks@0.15.10
+```
+
+> 运行 `dsh plugin add` 前确认该 profile 的 DSH 版本满足 `engines.dsh`（`>=0.2.1-rc.1 <0.3.0`）。
+
+### 本地开发安装
 
 ```bash
 # 在插件目录构建
