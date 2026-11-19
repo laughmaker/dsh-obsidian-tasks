@@ -298,7 +298,11 @@ export function BoardPage(props: BoardPageProps): ReactNode {
   const [openMonths, setOpenMonths] = useState<string[]>([])
   const [rangeGroups, setRangeGroups] = useState<BoardGroup[]>([])
 
-  const [editing, setEditing] = useState<{ file: string; line: number; text: string; original: string; version?: string } | undefined>(undefined)
+  const [editing, setEditing] = useState<{ file: string; line: number; date: string; text: string; original: string; version?: string } | undefined>(undefined)
+  const editSaving = useRef(false)
+  const [editBusy, setEditBusy] = useState(false)
+  const editBlurred = useRef(false)
+  const editGeneration = useRef(0)
 
   // Failure states derived once so the composer, nav badges and status bar agree.
   // A timeline failure is not a whole-board failure: the list still renders.
@@ -517,6 +521,7 @@ export function BoardPage(props: BoardPageProps): ReactNode {
   useEffect(() => {
     const previous = previousVaultRef.current
     if (previous !== '' && previous !== vault) {
+      editGeneration.current += 1
       setTagFilter(undefined)
       setView({ kind: 'today' })
       setAnchor(today)
@@ -711,28 +716,55 @@ export function BoardPage(props: BoardPageProps): ReactNode {
   }, [anchor, runPending, vault])
 
   /** Start editing a task's text in place; clear any stale delete guard. */
-  const onStartEdit = useCallback((task: BoardTask) => {
+  const onStartEdit = useCallback((task: DatedTask) => {
     deleteGuard.current = false
-    setEditing({ file: task.file, line: task.line, text: task.text, original: task.text, version: task.version })
+    editGeneration.current += 1
+    setEditing({ file: task.file, line: task.line, date: task.date, text: task.text, original: task.text, version: task.version })
   }, [])
 
-  /** Save the edited text of one task line. */
-  const onSaveEdit = useCallback(() => {
+  /** Save on Enter without unmounting the input; blur still ends editing. */
+  const onSaveEdit = useCallback((keepOpen = false) => {
     if (editing === undefined) return
-    const text = editing.text.trim()
+    if (editSaving.current) {
+      if (!keepOpen) editBlurred.current = true
+      return
+    }
     const target = editing
+    const text = target.text.trim()
     deleteGuard.current = false
-    setEditing(undefined)
-    if (text === '' || text === target.original) return
-    void runPending(
-      taskKey(target),
-      () => editTask(vault, target.file, target.line, text, anchor, 2, requireVersion(target)),
-      t('notice.edited'),
-    )
+    if (text === '' || text === target.original) {
+      if (!keepOpen) setEditing(undefined)
+      return
+    }
+    if (!keepOpen) setEditing(undefined)
+    const generation = editGeneration.current
+    editSaving.current = true
+    setEditBusy(true)
+    editBlurred.current = false
+    void (async () => {
+      const snap = await runPending(
+        taskKey(target),
+        () => editTask(vault, target.file, target.line, text, anchor, 2, requireVersion(target)),
+        t('notice.edited'),
+      )
+      if (!keepOpen || snap === undefined || editGeneration.current !== generation) return
+      let tasks = [...snap.groups.flatMap((group) => group.tasks), ...(snap.inbox?.tasks ?? [])]
+      // A wide-range task can lie outside the returned day snapshot.
+      if (!tasks.some((task) => task.file === target.file && task.line === target.line) && target.date !== 'inbox') {
+        try { tasks = (await fetchRange(vault, target.date, target.date)).flatMap((group) => group.tasks) } catch { tasks = [] }
+      }
+      const updated = tasks.find((task) => task.file === target.file && task.line === target.line && task.text === text)
+      if (editGeneration.current !== generation) return
+      if (editBlurred.current) setEditing(undefined)
+      else setEditing((current) => current?.file === target.file && current.line === target.line
+        ? { ...current, original: text, version: updated?.version }
+        : current)
+    })().finally(() => { editSaving.current = false; setEditBusy(false) })
   }, [anchor, editing, runPending, t, vault])
 
   /** Leave the editor without writing (Escape). */
   const onCancelEdit = useCallback(() => {
+    editGeneration.current += 1
     deleteGuard.current = false
     setEditing(undefined)
   }, [])
@@ -1504,6 +1536,7 @@ export function BoardPage(props: BoardPageProps): ReactNode {
                   disabled={composerDisabled}
                   onChange={(event) => { setAddText(event.target.value) }}
                   onKeyDown={(event) => {
+                    if (event.nativeEvent.isComposing || event.keyCode === 229) return
                     if (event.key === 'Enter') {
                       event.preventDefault()
                       onAdd()
@@ -1679,12 +1712,15 @@ export function BoardPage(props: BoardPageProps): ReactNode {
                                   className={'ob-rem-edit-input'}
                                   autoFocus
                                   value={editing.text}
+                                  readOnly={editBusy}
+                                  aria-busy={editBusy}
                                   aria-label={t('task.edit')}
                                   onChange={(event) => { setEditing({ ...editing, text: event.target.value }) }}
                                   onKeyDown={(event) => {
+                                    if (event.nativeEvent.isComposing || event.keyCode === 229) return
                                     if (event.key === 'Enter') {
                                       event.preventDefault()
-                                      onSaveEdit()
+                                      onSaveEdit(true)
                                     }
                                     if (event.key === 'Escape') {
                                       event.preventDefault()
@@ -1706,10 +1742,11 @@ export function BoardPage(props: BoardPageProps): ReactNode {
                                 <button
                                   type={'button'}
                                   className={'ob-rem-editbtn ob-rem-editbtn-danger'}
+                                  disabled={editBusy}
                                   title={t('task.delete')}
                                   aria-label={t('task.delete')}
                                   onMouseDown={(event) => { event.preventDefault() }}
-                                  onClick={() => { onDeleteTask(task) }}
+                                  onClick={() => { onDeleteTask({ ...task, version: editing.version }) }}
                                 >
                                   <svg viewBox={'0 0 16 16'} width={'11'} height={'11'} aria-hidden={'true'}>
                                     <path d={'M4 4l8 8M12 4l-8 8'} fill={'none'} stroke={'currentColor'} strokeWidth={'1.8'} strokeLinecap={'round'} />

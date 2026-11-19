@@ -554,7 +554,46 @@ async function main() {
     })
     check('编辑下划线与已完成图标同色',
       editUnderline.shadow.includes('rgb(10, 132, 255)') && editUnderline.done === 'rgb(10, 132, 255)', editUnderline)
+    // Enter saves without unmounting the editor; each subsequent write must use
+    // the version returned by the previous one, including while requests are slow.
+    await page.evaluate(() => {
+      const base = window.fetch
+      let version = 1
+      window.__editCalls = []
+      window.fetch = async (input, init) => {
+        const path = new URL(typeof input === 'string' ? input : input.url, 'http://sandbox.test/').pathname
+        if (!path.endsWith('/edit')) return base(input, init)
+        const body = JSON.parse(init.body)
+        window.__editCalls.push(body)
+        await new Promise((resolve) => setTimeout(resolve, 120))
+        if (body.expectedVersion !== `v${version}`) return { ok: false, status: 409, text: async () => JSON.stringify({ ok: false, error: 'TASK_CONFLICT' }) }
+        version += 1
+        const response = await base(input, init)
+        const data = JSON.parse(await response.text())
+        const task = data.groups.flatMap((group) => group.tasks).find((item) => item.file === body.file && item.line === body.line)
+        task.text = body.text
+        task.version = `v${version}`
+        return { ok: true, status: 200, text: async () => JSON.stringify(data) }
+      }
+      window.__restoreFetch = () => { window.fetch = base }
+    })
+    const editor = page.locator('.ob-rem-edit-input')
+    await editor.fill('beta revised')
+    await editor.press('Enter')
+    await editor.press('Enter')
+    await page.waitForTimeout(300)
+    let editState = await page.evaluate(() => ({ focused: document.activeElement?.classList.contains('ob-rem-edit-input'), calls: window.__editCalls.slice() }))
+    check('回车保存后编辑框保持焦点，重复按键不重复提交', editState.focused && editState.calls.length === 1, editState)
+    await editor.fill('beta revised twice')
+    await editor.press('Enter')
+    await page.waitForTimeout(300)
+    editState = await page.evaluate(() => ({ focused: document.activeElement?.classList.contains('ob-rem-edit-input'), calls: window.__editCalls.slice() }))
+    check('连续编辑使用新版本并保持焦点', editState.focused && editState.calls.length === 2 && editState.calls[1].expectedVersion === 'v2', editState)
+    await editor.dispatchEvent('keydown', { key: 'Enter', isComposing: true })
+    await page.waitForTimeout(150)
+    check('输入法组合期间回车不提交', await page.evaluate(() => window.__editCalls.length === 2))
     await page.keyboard.press('Escape')
+    await page.evaluate(() => window.__restoreFetch())
     await page.locator('.ob-rem-navrow', { hasText: 'Today' }).click()
     await page.waitForTimeout(150)
 
@@ -673,8 +712,9 @@ async function main() {
     await page.locator('.ob-rem-navrow', { hasText: 'Inbox' }).click()
     await page.waitForTimeout(120)
     await page.locator('.ob-rem-add-input').fill('capture this')
-    await page.locator('.ob-rem-add-submit').click()
+    await page.locator('.ob-rem-add-input').press('Enter')
     await page.waitForTimeout(160)
+    check('添加任务回车后输入框保持焦点', await page.evaluate(() => document.activeElement?.classList.contains('ob-rem-add-input')))
     const addCall = await page.evaluate(() => window.__DSH_HARNESS__.calls.filter((c) => c.path.endsWith('/add')))
     const addBody = addCall[0] && addCall[0].body
     check('待安排添加发送 inbox:true 且不带 date',

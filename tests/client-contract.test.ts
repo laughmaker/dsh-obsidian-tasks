@@ -43,7 +43,7 @@ const locales = source('src/client/locales.ts')
 describe('P0-1 · 删除守卫', () => {
   it('onStartEdit 重置 deleteGuard，删除按钮阻止 mousedown 抢焦点，onBlur 跳过同编辑行删除按钮', () => {
     expect(board).toContain('const deleteGuard = useRef<boolean>(false)')
-    expect(board).toMatch(/const onStartEdit = useCallback\(\(task: BoardTask\) => \{\s*deleteGuard\.current = false/)
+    expect(board).toMatch(/const onStartEdit = useCallback\(\(task: DatedTask\) => \{\s*deleteGuard\.current = false/)
     expect(board).toMatch(/const onDeleteTask = useCallback\([\s\S]*?deleteGuard\.current = true/)
     expect(board).toContain('onMouseDown={(event) => { event.preventDefault() }}')
     expect(board).toContain("next.closest('.ob-rem-editrow')")
