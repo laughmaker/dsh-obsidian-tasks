@@ -11,6 +11,7 @@ export const LOCALE_NS = 'obsidianTasks'
 /** Chinese copy — the reference shape. */
 export const zh = {
   'panel.label': '任务',
+  'footer.open': '打开任务看板',
   'side.tags': '标签',
   'side.timeline': '时间线',
   'side.tagClear': '清除筛选',
@@ -123,6 +124,7 @@ export const zh = {
 /** English copy. */
 export const en: Record<keyof typeof zh, string> = {
   'panel.label': 'Tasks',
+  'footer.open': 'Open task board',
   'side.tags': 'Tags',
   'side.timeline': 'Timeline',
   'side.tagClear': 'Clear filter',

@@ -318,3 +318,206 @@ describe('v0.15 · 吸顶留白、可拖侧栏与旧服务端降级', () => {
     expect(locales).toContain("'add.inboxUnavailable'")
   })
 })
+
+describe('侧栏底栏入口 · 与 Plugin 并排', () => {
+  it('在 sidebar.footer.action 注册任务入口，点击打开看板主面板', () => {
+    const idx = source('src/client/index.tsx')
+    expect(idx).toContain("inject = ['slots', 'locale', 'layout', 'sessions']")
+    expect(idx).toContain("name: 'sidebar.footer.action'")
+    expect(idx).toContain("id: 'obsidian-tasks'")
+    expect(idx).toContain('order: 10')
+    expect(idx).toContain('ctx.layout.selectPanel(PANEL_ID)')
+    // The foot button collapses to a round icon in the rail and shows a label
+    // when the sidebar is wide.
+    expect(idx).toContain("data-rail={wide ? undefined : 'true'}")
+    expect(idx).toContain("<ChecklistIcon size={wide ? 16 : 18} />")
+    expect(styles).toContain('.ob-foot-badge {')
+    expect(styles).toContain(".ob-foot-root[data-rail='true'] .ob-foot-badge {")
+    expect(locales).toContain("'footer.open'")
+    expect((locales.match(/'footer\.open'/g) ?? []).length).toBe(2)
+  })
+})
+
+describe('DS Bot 底栏入口 · 原生 Plugins 右侧（自清理）', () => {
+  const adapter = source('src/client/dsbotFooter.ts')
+
+  it('锚定 DS Bot 原生 Plugins 按钮并在其后插入自有按钮', () => {
+    expect(adapter).toContain("DSBOT_FOOT_ATTR = 'data-dsh-obsidian-tasks-foot'")
+    expect(adapter).toContain('.bt-leftcol-foot')
+    expect(adapter).toContain("button.bt-account[aria-label=\"Plugins\"], button.bt-account[title=\"Plugins\"]")
+    expect(adapter).toContain("anchor.insertAdjacentElement('afterend'")
+    expect(adapter).toContain('doc.createElementNS')
+    expect(adapter).toContain("t('footer.open')")
+  })
+
+  it('自清理：MutationObserver 重锚定、去重并在 dispose 移除后停止观察', () => {
+    expect(adapter).toContain('new MutationObserver(schedule)')
+    expect(adapter).toContain('observer.disconnect()')
+    expect(adapter).toContain("doc.querySelectorAll<HTMLElement>(`[${DSBOT_FOOT_ATTR}]`)")
+    expect(adapter).toContain('if (owned.length === 1 && anchor.nextElementSibling === owned[0]) return')
+    expect(adapter).toContain('layout.selectPanel?.(PANEL_ID)')
+  })
+
+  it('仅 DS Bot 生效：无底栏/无 layout 时安全退回既有 Plugins → Tasks', () => {
+    // No anchor / no footer → early return, no throw.
+    expect(adapter).toContain('if (!foot) return')
+    expect(adapter).toContain('if (!anchor) return')
+    expect(adapter).toContain("if (!layout || typeof layout.selectPanel !== 'function') return () => {}")
+    // The generic footer action is suppressed in DS Bot to avoid a hidden/duplicate entry.
+    expect(source('src/client/index.tsx')).toContain('if (dsBotHostActive(')
+    expect(source('src/client/index.tsx')).toContain('installDsBotFooter(ctx, t)')
+    expect(source('src/client/index.tsx')).toContain("'obsidian-tasks: dsbot-foot'")
+  })
+})
+
+describe('看板打开时真实折叠 DS Bot 右侧群详情栏（宿主动作，按进入前状态恢复）', () => {
+  const adapter = source('src/client/dsbotHostPanel.ts')
+
+  it('入口是公开槽位：读 shell.overlay 条目的 inject() face，做能力检查', () => {
+    expect(adapter).toContain("const OVERLAY_SLOT = 'shell.overlay' as const")
+    expect(adapter).toContain('slots.entries(OVERLAY_SLOT)')
+    expect(adapter).toContain('entry.inject()')
+    // Capability check: DS Bot's own closePanel plus its state source, or no-op.
+    expect(adapter).toContain("typeof actions?.closePanel !== 'function'")
+    expect(adapter).toContain("typeof ui?.getSnapshot !== 'function'")
+    // A throwing inject on some other entry must not disable the fold.
+    expect(adapter).toMatch(/try \{\s*face = entry\.inject\(\)\s*\} catch \{\s*continue\s*\}/)
+  })
+
+  it('折叠 = 宿主自己的 closePanel，恢复 = showDetails(原 id)，不写任何偏好', () => {
+    expect(adapter).toContain('face.actions.closePanel?.()')
+    expect(adapter).toContain('actions.showDetails?.(restore.id, restore.tab)')
+    expect(adapter).toContain("if (restore.view === 'side') actions.openSideChat?.(restore.id, restore.side)")
+    expect(adapter).toContain("else if (restore.view === 'browser') actions.setPanelView?.('browser')")
+    // The temporary fold must never reach storage or DS Bot's sidebar preference.
+    expect(adapter).not.toMatch(/localStorage|sessionStorage|toggleExpanded/)
+    // No visual substitute: the CSS-hiding guard is gone for good.
+    expect(adapter).not.toMatch(/display\s*:\s*none|margin-right|createElement\('style'\)/)
+    expect(() => source('src/client/dsbotSidePanel.ts')).toThrow()
+    expect(board).not.toContain('installDsBotSidePanelGuard')
+    expect(board).not.toContain('dsbotSidePanel')
+  })
+
+  it('只看板存在时挂载：BoardPage 在 layout effect 中折叠，插件 apply 里绑定槽位上下文', () => {
+    expect(board).toContain("from './dsbotHostPanel.ts'")
+    expect(board).toContain('useLayoutEffect(() => foldDsBotPanelForBoard(), [])')
+    expect(source('src/client/index.tsx')).toContain('bindDsBotHost(ctx)')
+    expect(source('src/client/index.tsx')).toContain("'obsidian-tasks: dsbot-host-panel'")
+  })
+
+  /** Minimal fake DS Bot: one overlay entry whose inject() yields a face. */
+  function fakeHost(initial: { details?: string | null; view?: string; tab?: string | null; side?: string | null } = {}) {
+    const calls: string[] = []
+    const state: { details?: string | null; view?: string; tab?: string | null; side?: string | null } = {
+      details: null,
+      view: 'details',
+      tab: null,
+      side: null,
+      ...initial,
+    }
+    const face = {
+      actions: {
+        closePanel() { calls.push('closePanel'); state.details = null; state.view = 'details'; state.tab = null; state.side = null },
+        showDetails(id: string, tab?: string | null) { calls.push(`showDetails:${id}:${tab ?? ''}`); state.details = id; state.view = 'details'; state.tab = tab ?? null },
+        openSideChat(id: string, side?: string | null) { calls.push(`openSideChat:${id}:${side ?? ''}`); state.details = id; state.view = 'side'; state.side = side ?? null },
+        setPanelView(view: string) { calls.push(`setPanelView:${view}`); state.view = view },
+      },
+      hooks: { ui: { getSnapshot: () => state } },
+    }
+    // The release banner registers on the same slot but injects another shape.
+    const entries = [
+      { options: { id: 'host-release-change' }, inject: () => ({ dismissRelease: () => {}, reloadPage: () => {} }) },
+      { options: { id: 'bot' }, inject: () => face },
+    ]
+    const session = { id: 'active-session', retainedBy: { mainView: 1 } }
+    const ctx = {
+      slots: { entries: (key: string) => (key === 'shell.overlay' ? entries : []) },
+      sessions: { list: { getSnapshot: () => ({ byId: { current: session } }) } },
+    }
+    return { ctx, state, calls, session }
+  }
+
+  it('进入折叠 / 离开恢复：原先打开的面板按原 id 与视图复原', async () => {
+    const mod = await import('../src/client/dsbotHostPanel.ts')
+    const host = fakeHost({ details: 'room-1', view: 'details' })
+    mod.bindDsBotHost(host.ctx as never)
+    const off = mod.foldDsBotPanelForBoard()
+    expect(host.calls).toEqual(['closePanel'])
+    expect(host.state.details).toBeNull()
+    off()
+    expect(host.calls).toEqual(['closePanel', 'showDetails:room-1:'])
+    expect(host.state.details).toBe('room-1')
+  })
+
+  it('原先关闭则不触动：进入不折叠，离开不打开', async () => {
+    const mod = await import('../src/client/dsbotHostPanel.ts')
+    const host = fakeHost({ details: null })
+    mod.bindDsBotHost(host.ctx as never)
+    const off = mod.foldDsBotPanelForBoard()
+    expect(host.calls).toEqual([])
+    off()
+    expect(host.calls).toEqual([])
+    expect(host.state.details).toBeNull()
+  })
+
+  it('side / browser 视图按原样恢复', async () => {
+    const mod = await import('../src/client/dsbotHostPanel.ts')
+    const side = fakeHost({ details: 'bot-1', view: 'side', side: 'chat-9' })
+    mod.bindDsBotHost(side.ctx as never)
+    mod.foldDsBotPanelForBoard()()
+    expect(side.calls).toEqual(['closePanel', 'showDetails:bot-1:', 'openSideChat:bot-1:chat-9'])
+    expect(side.state.view).toBe('side')
+
+    const browser = fakeHost({ details: 'bot-2', view: 'browser', tab: 'files' })
+    mod.bindDsBotHost(browser.ctx as never)
+    mod.foldDsBotPanelForBoard()()
+    expect(browser.calls).toEqual(['closePanel', 'showDetails:bot-2:files', 'setPanelView:browser'])
+  })
+
+  it('重复挂载共享一次折叠：只在计数归零时恢复一次', async () => {
+    const mod = await import('../src/client/dsbotHostPanel.ts')
+    const host = fakeHost({ details: 'room-2' })
+    mod.bindDsBotHost(host.ctx as never)
+    const a = mod.foldDsBotPanelForBoard()
+    const b = mod.foldDsBotPanelForBoard()
+    expect(host.calls).toEqual(['closePanel'])
+    a()
+    expect(host.calls).toEqual(['closePanel']) // still held by b
+    b()
+    b() // idempotent, no throw, no second restore
+    expect(host.calls).toEqual(['closePanel', 'showDetails:room-2:'])
+  })
+
+  it('期间用户自己另开了面板：离开不覆盖用户的选择', async () => {
+    const mod = await import('../src/client/dsbotHostPanel.ts')
+    const host = fakeHost({ details: 'room-3' })
+    mod.bindDsBotHost(host.ctx as never)
+    const off = mod.foldDsBotPanelForBoard()
+    host.state.details = 'user-opened' // the user picked another panel meanwhile
+    off()
+    expect(host.calls).toEqual(['closePanel'])
+    expect(host.state.details).toBe('user-opened')
+  })
+
+  it('切换会话时不恢复上个会话的面板', async () => {
+    const mod = await import('../src/client/dsbotHostPanel.ts')
+    const host = fakeHost({ details: 'room-3' })
+    mod.bindDsBotHost(host.ctx)
+    const off = mod.foldDsBotPanelForBoard()
+    host.session.id = 'another-session'
+    off()
+    expect(host.calls).toEqual(['closePanel'])
+  })
+
+  it('没有宿主 face（纯 dsh-web / 尚未注册）时是 no-op，不抛错', async () => {
+    const mod = await import('../src/client/dsbotHostPanel.ts')
+    mod.bindDsBotHost(undefined)
+    expect(mod.resolveDsBotFace()).toBeUndefined()
+    const off = mod.foldDsBotPanelForBoard()
+    expect(() => off()).not.toThrow()
+    // An empty registry is equally harmless.
+    mod.bindDsBotHost({ slots: { entries: () => [] } } as never)
+    expect(mod.resolveDsBotFace()).toBeUndefined()
+    expect(() => mod.foldDsBotPanelForBoard()()).not.toThrow()
+  })
+})

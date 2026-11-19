@@ -88,6 +88,22 @@ export const css = String.raw`
   border-bottom: 1px solid var(--ob-border);
   min-height: 34px;
 }
+/* This control row sits in the host's window-drag band. DS Bot is a frameless
+   window: it sets data-windows-titlebar and DSH paints a 40px, full-width
+   caption drag mask as the frame before-pseudo element, behind the page content.
+   DSH normally exempts every interactive control from that mask through its
+   html[data-platform=darwin] :is(button,a,input,select,...) rule; DS Bot sets the
+   flag without data-platform, so that global exemption never fires and these
+   bare select/button controls stay inside the drag mask -- their upper half is
+   swallowed as a window drag while only the lower edge clicks. Re-apply the same
+   exemption locally to just this row and its two controls; the rest of the title
+   strip and the surrounding window keep dragging. */
+.ob-rem-vaultrow,
+.ob-rem-vaultselect,
+.ob-rem-collapse {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
 .ob-rem-vaultname {
   flex: 1; min-width: 0; font-size: 13px; font-weight: 650; letter-spacing: -0.01em;
   color: var(--dsw-alias-label-primary, #1a1a1a);
@@ -701,6 +717,59 @@ button.ob-rem-statusbar { cursor: pointer; }
 .ob-rem-add-submit, .ob-rem-datechip, .ob-rem-tag,
 .ob-rem-tldot, .ob-rem-addbtn, .ob-rem-check, .ob-rem-empty-icon {
   corner-shape: round;
+}
+
+/* Sidebar-foot shortcut, seated beside the built-in Plugin button in the
+   sidebar's footer action row. Matches the row's 42px rhythm and host tokens so
+   it reads as native chrome in both light and dark themes; collapses to a
+   36px round icon when the sidebar is in its rail state. */
+.ob-foot-root {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+.ob-foot-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  margin: 0;
+  padding: 0 12px 0 10px;
+  color: var(--dsw-alias-label-primary, inherit);
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+  corner-shape: round;
+}
+.ob-foot-badge:hover {
+  background: var(--dsw-alias-interactive-bg-hover, color-mix(in srgb, currentColor 10%, transparent));
+}
+.ob-foot-badge:focus-visible {
+  outline: 2px solid #0a84ff;
+  outline-offset: 1px;
+}
+.ob-foot-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ob-foot-root[data-rail='true'] {
+  width: 36px;
+  height: 36px;
+}
+.ob-foot-root[data-rail='true'] .ob-foot-badge {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  justify-content: center;
+  gap: 0;
+  border-radius: 50%;
 }
 ` + calendarCss
 

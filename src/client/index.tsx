@@ -17,6 +17,8 @@ import * as primitives from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { BoardPage, PANEL_ID } from './BoardPage.tsx'
 import { installStyles } from './styles.ts'
+import { dsBotHostActive, installDsBotFooter } from './dsbotFooter.ts'
+import { bindDsBotHost } from './dsbotHostPanel.ts'
 import { LOCALE_NS, en, zh } from './locales.ts'
 
 export { PANEL_ID } from './BoardPage.tsx'
@@ -28,8 +30,8 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   }
 }
 
-/** Services the sidebar entry and main panel need. */
-export const inject = ['slots', 'locale']
+/** Services the sidebar entry, footer shortcut and main panel need. */
+export const inject = ['slots', 'locale', 'layout', 'sessions']
 
 /** The shape of an icon component from the primitives package. */
 type IconComponent = (props: { size?: number; className?: string }) => ReactNode
@@ -70,6 +72,22 @@ export function apply(ctx: Context): void {
   ctx.effect(() => ctx.locale.register(LOCALE_NS, { zh, en }), 'obsidian-tasks: dictionaries')
   installStyles(ctx)
 
+  // DS Bot keeps its conversation/group details in its own right-hand drawer, which
+  // pushes the centre column aside. The board folds that drawer through DS Bot's own
+  // action surface, which the host hands out on its `shell.overlay` slot entries — so
+  // the adapter needs this context to reach the slot registry. Bound for the plugin's
+  // lifetime; in a plain dsh-web shell no such entry exists and every call no-ops.
+  ctx.effect(() => {
+    bindDsBotHost(ctx)
+    return () => { bindDsBotHost(undefined) }
+  }, 'obsidian-tasks: dsbot-host-panel')
+
+  // DS Bot renders its own native left column and hides the DSH sidebar, so the
+  // generic footer action below would be invisible there. Mount a dedicated,
+  // self-cleaning button right after DS Bot's built-in Plugins footer button.
+  // In a plain dsh-web shell this is a no-op and the footer action is used.
+  ctx.effect(() => installDsBotFooter(ctx, t), 'obsidian-tasks: dsbot-foot')
+
   // The board is a global panel: it belongs to the profile, not a Session, and
   // the sidebar entry selects it. `key` matches the sidebar entry `id`.
   ctx.slots.inject('main', () => ctx.slots.register({
@@ -86,4 +104,38 @@ export function apply(ctx: Context): void {
     label: () => t('panel.label'),
     locale: LOCALE_NS,
   }, TasksPanelIcon))
+
+  // A compact shortcut at the sidebar foot, immediately to the right of the
+  // built-in Plugin button (`sidebar.footer.action` is a list ordered ascending;
+  // the Plugin entry defaults to order 0, so order 10 lands after it). Clicking
+  // it selects the board's main panel — the same call a sidebar row makes.
+  //
+  // This is the generic dsh-web path only. In DS Bot the sidebar is hidden and a
+  // native footer button is mounted instead (see `installDsBotFooter`), so skip
+  // rendering here to avoid a hidden or duplicate entry.
+  const TasksFooterAction = ({ wide }: PropsRuntime<'sidebar.footer.action'>): ReactNode => {
+    if (dsBotHostActive(typeof document === 'undefined' ? undefined : document)) return null
+    return (
+      <div className={'ob-foot-root'} data-rail={wide ? undefined : 'true'}>
+        <button
+          type={'button'}
+          className={'ob-foot-badge'}
+          title={t('footer.open')}
+          aria-label={t('footer.open')}
+          onClick={() => { ctx.layout.selectPanel(PANEL_ID) }}
+        >
+          <ChecklistIcon size={wide ? 16 : 18} />
+          {wide && <span className={'ob-foot-label'}>{t('panel.label')}</span>}
+        </button>
+      </div>
+    )
+  }
+
+  ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
+    name: 'sidebar.footer.action',
+    id: 'obsidian-tasks',
+    order: 10,
+    label: () => t('footer.open'),
+    locale: LOCALE_NS,
+  }, TasksFooterAction))
 }

@@ -12,7 +12,7 @@
  * @module dsh-obsidian-tasks/client/BoardPage
  */
 import {
-  useCallback, useEffect, useMemo, useRef, useState,
+  useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState,
   type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode,
 } from 'react'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
@@ -30,6 +30,7 @@ import { LOCALE_NS } from './locales.ts'
 import { parseScheduleToken } from './schedule.ts'
 import { inboxRelPath, noteRelPath } from './paths.ts'
 import { Calendar } from './Calendar.tsx'
+import { foldDsBotPanelForBoard } from './dsbotHostPanel.ts'
 
 /** The panel id shared by the sidebar entry and this main-slot occupant. */
 export const PANEL_ID = 'obsidianTasks' as MainPanelId
@@ -328,6 +329,15 @@ export function BoardPage(props: BoardPageProps): ReactNode {
       window.removeEventListener('focus', refresh)
     }
   }, [today])
+
+  // DS Bot draws the board in its main panel and keeps its conversation/group details
+  // drawer pushed over the right edge, narrowing the board. While the board is mounted,
+  // fold that drawer through DS Bot's own action (the same call its × button makes) so
+  // the layout is released rather than merely hidden; on unmount put back exactly the
+  // panel that was open on entry. A panel that was closed stays closed and nothing is
+  // written to preferences. In a plain dsh-web shell there is no such host, so this
+  // resolves to a no-op. A layout effect keeps the fold ahead of the first paint.
+  useLayoutEffect(() => foldDsBotPanelForBoard(), [])
 
   const rootRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<{ x: number; width: number } | undefined>(undefined)
